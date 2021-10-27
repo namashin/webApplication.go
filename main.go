@@ -1,8 +1,10 @@
 package main
 
 import (
-	"fmt"
+	"html/template"
 	"io/ioutil"
+	"log"
+	"net/http"
 )
 
 type Page struct {
@@ -24,10 +26,30 @@ func loadPage(title string) (*Page, error) {
 	return &Page{Title: title, Body: body}, nil
 }
 
-func main() {
-	p1 := &Page{Title: "test", Body: []byte("this is a Sample Page")}
-	p1.save()
+func viewHandler(w http.ResponseWriter, r *http.Request) {
+	title := r.URL.Path[len("/view/"):]
+	p, _ := loadPage(title)
+	renderTemplate(w, "view", p)
+}
 
-	p2, _ := loadPage(p1.Title)
-	fmt.Println(string(p2.Body))
+func editHandler(w http.ResponseWriter, r *http.Request) {
+	title := r.URL.Path[len("/edit/"):]
+	p, err := loadPage(title)
+
+	if err != nil {
+		p = &Page{Title: title}
+	}
+
+	renderTemplate(w, "edit", p)
+}
+
+func renderTemplate(w http.ResponseWriter, temp string, p *Page) {
+	t, _ := template.ParseFiles(temp + ".html")
+	t.Execute(w, p)
+}
+
+func main() {
+	http.HandleFunc("/view/", viewHandler)
+	http.HandleFunc("/edit/", editHandler)
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
