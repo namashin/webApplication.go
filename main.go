@@ -81,14 +81,16 @@ var validPath = regexp.MustCompile("^/(edit|view|save)/([a-zA-Z0-9+]$)")
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		m := validPath.FindStringSubmatch(r.URL.Path)
+		match := validPath.FindStringSubmatch(r.URL.Path)
 
 		// findStringSubmatchの戻り値がnilの場合マッチしないことを意味する。
-		if m == nil {
+		if match == nil {
 			http.NotFound(w, r)
 			return
 		}
-		fn(w, r, m[2])
+		
+		// match[2]は/([a-zA-Z0-9+]$)の部分
+		fn(w, r, match[2])
 	}
 }
 
